@@ -50,9 +50,10 @@ async function ecbAAA() {
 // ---------- BIS central bank policy rates ----------
 async function bis() {
   const url = 'https://stats.bis.org/api/v2/data/dataflow/BIS/WS_CBPOL/1.0/D.CH+GB+JP+US+XM?lastNObservations=1&format=csv';
-  const t = await get(url); const lines = t.trim().split(/\r?\n/); const h = lines[0].split(',');
+  const t = await get(url); const split = l => { const o = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === ',' && !q) { o.push(cur); cur = ''; } else cur += ch; } o.push(cur); return o; };
+  const lines = t.trim().split(/\r?\n/); const h = split(lines[0]);
   const ia = h.indexOf('REF_AREA'), it = h.indexOf('TIME_PERIOD'), iv = h.indexOf('OBS_VALUE'); const out = {};
-  for (const l of lines.slice(1)) { const c = l.split(','); if (c[ia]) out[c[ia]] = { date: c[it], rate: num(c[iv]) }; }
+  for (const l of lines.slice(1)) { const c = split(l); if (c[ia]) out[c[ia]] = { date: c[it], rate: num(c[iv]) }; }
   return { ...out, src: url };
 }
 // ---------- GBP: SONIA (Bank of England IADB) ----------
@@ -73,7 +74,7 @@ async function saron() {
     try {
       const t = await get(url); debug['snb_' + cube] = t.slice(0, 400);
       const lines = t.split(/\r?\n/).filter(l => l.includes(';'));
-      const hi = lines.findIndex(l => /Date/i.test(l)); if (hi < 0) continue;
+      const hi = lines.findIndex(l => /^"?Date"?;/i.test(l)); if (hi < 0) continue;
       const head = lines[hi].split(';').map(s => s.replace(/"/g, ''));
       const rows = lines.slice(hi + 1).map(l => l.split(';').map(s => s.replace(/"/g, '')));
       const dIdx = head.findIndex(h => /Date/i.test(h)), vIdx = head.findIndex(h => /Value/i.test(h)), kIdx = head.findIndex(h => /D0/i.test(h));
