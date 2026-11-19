@@ -1,0 +1,25 @@
+name: fetch-rates
+on:
+  schedule:
+    - cron: '20 6,13,21 * * 1-5'   # 06:20, 13:20, 21:20 UTC on weekdays
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency: { group: fetch-rates, cancel-in-progress: false }
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Fetch official public rates
+        run: node scripts/fetch.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "fx-feed-bot"
+          git config user.email "fx-feed-bot@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || git commit -m "data: $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
