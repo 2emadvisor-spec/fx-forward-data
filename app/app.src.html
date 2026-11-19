@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>FX Forward Desk</title>
+<style>
+:root{--bg:#0b1020;--p:#131b2b;--p2:#182235;--line:#2b3851;--tx:#eaf1ff;--mu:#91a2ba;--ac:#67e3d0;--red:#ff828e;--amb:#f6c46b;--blue:#8db5ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+a{color:var(--ac)}button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{width:100%;background:#0c1423;border:1px solid #394962;border-radius:8px;padding:9px 10px;min-height:40px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}textarea{min-height:120px;font:12px/1.4 ui-monospace,Consolas,monospace}
+label{display:block;font-size:12px;color:#b1c0d4;font-weight:600;margin-bottom:5px}
+.top{position:sticky;top:0;z-index:10;background:#0d1423f2;border-bottom:1px solid var(--line);backdrop-filter:blur(10px)}
+.bar{max-width:1400px;margin:auto;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.brand{font-weight:800;letter-spacing:.4px;display:flex;align-items:center;gap:9px}.mark{background:var(--ac);color:#072323;border-radius:8px;padding:5px 7px;font-size:12px;font-weight:900}
+.status{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px}
+.chip{border:1px solid #3e566d;background:#162536;color:#b9dcef;border-radius:99px;padding:4px 9px;white-space:nowrap}
+.chip.ok{border-color:#2c736b;color:#9ef7e6}.chip.warn{border-color:#8a6b2c;color:var(--amb)}.chip.bad{border-color:#8a4251;color:var(--red)}
+nav.tabs{max-width:1400px;margin:auto;padding:0 18px 8px;display:flex;gap:4px;overflow-x:auto}
+nav.tabs a{padding:8px 13px;border-radius:8px;text-decoration:none;color:#9fb0c4;font-weight:700;font-size:13px;white-space:nowrap}nav.tabs a.on{background:var(--ac);color:#082c2a}
+main{max-width:1400px;margin:auto;padding:16px 18px 80px}
+.panel{background:linear-gradient(180deg,#141e30,#121b2a);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:0 0 10px}h3{font-size:14px;margin:14px 0 8px;color:#cfe0f2}
+.mu{color:var(--mu)}.sm{font-size:12px}.xs{font-size:11px}.pos{color:var(--ac)}.neg{color:var(--red)}.amb{color:var(--amb)}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}main{padding:12px 10px 80px}.panel{padding:14px}}
+.btn{border:1px solid #45566d;background:#1a2639;border-radius:8px;padding:9px 13px;font-weight:700;font-size:12px;cursor:pointer;min-height:38px}
+.btn:hover{background:#293951}.btn.pri{background:var(--ac);color:#092b2a;border-color:var(--ac)}.btn.dan{border-color:#704451;color:#ffb1b8;background:#3b2431}.btn.sm{padding:5px 9px;min-height:30px;font-size:11px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kpi{border:1px solid var(--line);border-radius:12px;background:#111b2b;padding:13px}.kpi .v{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:3px;overflow-wrap:anywhere}.kpi .l{font-size:11px;color:var(--mu)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th{background:#162238;color:#92a9c0;font-size:10px;text-transform:uppercase;letter-spacing:.6px;text-align:left;padding:9px 10px;white-space:nowrap}
+td{padding:9px 10px;border-top:1px solid #29374b;font-size:12px;white-space:nowrap}td.r,th.r{text-align:right}tr.click{cursor:pointer}tr.click:hover td{background:#172439}
+.tag{display:inline-block;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:800}.qA{background:#123e3e;color:#9ef7e6}.qB{background:#3a3418;color:var(--amb)}.qC{background:#42242d;color:var(--red)}
+.res{border:1px solid #2e7775;background:linear-gradient(130deg,#143c3b,#183047);border-radius:12px;padding:14px}.big{font-size:28px;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:3px 14px;font-size:12px}.kv div:nth-child(odd){color:var(--mu)}.kv div:nth-child(even){text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.note{background:#132b3b;border:1px solid #315369;color:#b8d5e9;padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.55}.note.warn{background:#33291a;border-color:#7a6232;color:#f3d9a6}.note.bad{background:#3e202b;border-color:#8a4251;color:#ffc2c8}
+.seg{display:flex;gap:4px;background:#172235;padding:4px;border-radius:9px;border:1px solid var(--line);flex-wrap:wrap}.seg button{border:0;background:transparent;color:#9fb0c4;padding:7px 11px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer}.seg button.on{background:var(--ac);color:#082c2a}
+.modal{position:fixed;inset:0;background:#020711cc;z-index:30;display:none;align-items:flex-start;justify-content:center;padding:20px 10px;overflow-y:auto}.modal.on{display:flex}
+.box{width:min(760px,100%);background:#172235;border:1px solid #45556a;border-radius:14px;padding:18px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a4a44;border:1px solid #468b7e;color:#dbfffa;border-radius:9px;padding:10px 14px;z-index:40;display:none;font-size:12px;max-width:92vw}.toast.on{display:block}
+code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}.f{background:#101927;border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#b5e5e0;white-space:pre-wrap}
+.cards{display:none}@media(max-width:760px){.cards{display:grid;gap:8px}.tbl-desktop{display:none}}
+.card{border:1px solid var(--line);border-radius:11px;padding:12px;background:#111b2b}.card .h{display:flex;justify-content:space-between;gap:8px;font-weight:800}
+details summary{cursor:pointer;color:#adc5dd;font-weight:700;font-size:12px}hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="bar"><div class="brand"><span class="mark">FX</span>FORWARD DESK <span class="mu sm" style="font-weight:600">· CIP, controllo banca, chiusure</span></div>
+ <div class="status" id="status"></div></div>
+ <nav class="tabs" id="tabs"><a href="#posizioni" data-t="posizioni">Posizioni</a><a href="#banca" data-t="banca">Controllo banca</a><a href="#simulatore" data-t="simulatore">Simulatore</a><a href="#mercato" data-t="mercato">Mercato e dati</a><a href="#metodo" data-t="metodo">Metodo</a></nav>
+</header>
+<main>
+<!-- ===================== POSIZIONI ===================== -->
+<section id="v-posizioni">
+ <div class="panel"><div class="row" style="justify-content:space-between"><div><h1>Posizioni a termine</h1><div class="mu sm">Valutate al forward fair di oggi (CIP calibrata). Valore a data spot nella valuta quotata e nella valuta di riferimento.</div></div>
+ <div class="row"><button class="btn pri" id="addPos">+ Nuova posizione</button><button class="btn" id="refreshBig">↻ Spot da Bigdata.com</button></div></div>
+ <div class="grid g4" style="margin-top:14px" id="kpis"></div></div>
+ <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="seg" id="bookSeg"><button data-s="open" class="on">Aperte</button><button data-s="closed">Chiuse / storico</button></div><span class="mu xs" id="valDateNote"></span></div>
+ <div id="bookTable"></div></div>
+</section>
+<!-- ===================== BANCA ===================== -->
+<section id="v-banca" class="hidden">
+ <div class="panel"><h1>Controllo della quotazione bancaria</h1><div class="mu sm">Confronta il cambio proposto dalla banca con il mid di mercato alla stessa data valuta. Il margine è ciò che paghi rispetto al mid, scomposto in spot e punti.</div>
+ <div class="seg" id="bkMode" style="margin-top:12px"><button data-m="new" class="on">Nuova operazione</button><button data-m="closeout">Chiusura anticipata (close-out)</button><button data-m="early">Consegna anticipata</button><button data-m="ext">Proroga</button></div></div>
+ <div class="grid g2">
+  <div class="panel"><h2>Dati dell'operazione</h2><div class="grid g2" id="bkForm"></div>
+   <h3>Quotazione della banca</h3><div class="grid g2">
+    <div><label id="bkFbLabel">Cambio a termine (outright) proposto</label><input id="bkFb" inputmode="decimal" placeholder="es. 1.10520"></div>
+    <div><label>Ora della quotazione</label><input id="bkTime" type="time"></div>
+    <div class="bkNewOnly"><label>Spot della banca (facoltativo)</label><input id="bkSb" inputmode="decimal"></div>
+    <div class="bkNewOnly"><label>Punti della banca, in pips (facoltativo)</label><input id="bkPb" inputmode="decimal"></div></div>
+   <h3>Mid di mercato al momento della quotazione</h3>
+   <div class="grid g2"><div><label>Spot mid</label><input id="bkSmid" inputmode="decimal"></div><div><label>Fonte del mid</label><div class="mu sm" id="bkSmidSrc" style="padding-top:8px">—</div></div></div>
+   <details style="margin-top:10px" id="bkPasteBox"><summary>Incolla la tabella FXEmpire per questa coppia (riferimento più preciso)</summary>
+    <div class="mu xs" style="margin:6px 0">Apri <a id="bkFxeLink" href="https://www.fxempire.com/currencies/eur-usd/forward-rates" target="_blank" rel="noopener">la pagina Forward Rates</a>, seleziona tutto (Ctrl/Cmd+A), copia e incolla qui. Lo spot e i punti della tabella diventano il riferimento di mercato e ricalibrano il modello.</div>
+    <textarea id="bkPaste" placeholder="Incolla qui…"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="bkPasteGo">Usa questa tabella</button><span class="xs mu" id="bkPasteMsg"></span></div></details>
+   <div class="row" style="margin-top:14px"><button class="btn pri" id="bkGo">Calcola il margine</button></div>
+  </div>
+  <div class="panel"><h2>Risultato</h2><div id="bkOut" class="mu sm">Inserisci i dati e premi «Calcola il margine».</div></div>
+ </div>
+</section>
+<!-- ===================== SIMULATORE ===================== -->
+<section id="v-simulatore" class="hidden">
+ <div class="panel"><h1>Simulatore</h1><div class="mu sm">Prezzo teorico di un forward, curva dei punti, costo o rendimento della copertura e distribuzione statistica dello spot a scadenza.</div>
+ <div class="grid g4" style="margin-top:12px">
+  <div><label>Coppia</label><select id="smPair"></select></div>
+  <div><label>Operazione (sulla valuta base)</label><select id="smSide"><option value="SELL">Vendo base a termine</option><option value="BUY">Compro base a termine</option></select></div>
+  <div><label>Nozionale (valuta base)</label><input id="smN" inputmode="decimal" value="1000000"></div>
+  <div><label>Scadenza</label><div class="row" style="gap:4px"><select id="smTenor" style="flex:1"><option value="">Data…</option><option>1W</option><option>1M</option><option>2M</option><option selected>3M</option><option>6M</option><option>9M</option><option>1Y</option></select><input id="smDate" type="date" style="flex:1.4"></div></div>
+ </div><div class="row" style="margin-top:12px"><button class="btn pri" id="smGo">Calcola</button><button class="btn" id="smSave">Salva come posizione…</button></div></div>
+ <div id="smOut"></div>
+</section>
+<!-- ===================== MERCATO ===================== -->
+<section id="v-mercato" class="hidden">
+ <div class="panel"><h1>Mercato e dati</h1><div id="mkStatus" class="sm"></div></div>
+ <div class="panel"><div class="row" style="justify-content:space-between"><h2>Spot</h2><button class="btn" id="refreshBig2">↻ Aggiorna da Bigdata.com</button></div><div id="mkSpot"></div></div>
+ <div class="panel"><h2>Curve dei tassi usate dal modello</h2><div class="mu sm">Tassi semplici monetari sulla base della valuta (ACT/360 USD, EUR, CHF; ACT/365 GBP, JPY), per depositi con partenza alla data spot. Interpolazione lineare sui giorni, estrapolazione piatta.</div><div id="mkCurves" class="grid g2" style="margin-top:10px"></div></div>
+ <div class="panel"><h2>Calibrazione sul mercato</h2><div class="mu sm">Spread (bp annui) aggiunto al tasso di una gamba affinché la CIP riproduca esattamente i punti mid osservati: cattura cross-currency basis e struttura dei tassi non osservabile gratis. Gamba aggiustata: la valuta non-USD, la base per i cross.</div>
+  <div id="mkCalib" style="margin-top:10px"></div>
+  <h3>Ricalibra incollando una tabella</h3><div class="grid g3"><div><label>Coppia</label><select id="clPair"></select></div><div class="row" style="align-items:end"><a id="clLink" href="https://www.fxempire.com/currencies/eur-usd/forward-rates" target="_blank" rel="noopener" class="sm">Apri FXEmpire Forward Rates ↗</a></div></div>
+  <textarea id="clPaste" style="margin-top:8px" placeholder="Incolla la pagina copiata (FXEmpire o Investing), oppure righe tipo: 3M 44.82"></textarea>
+  <div class="row" style="margin-top:6px"><button class="btn pri" id="clGo">Calibra</button><button class="btn" id="clReset">Ripristina calibrazione iniziale</button><span class="xs mu" id="clMsg"></span></div></div>
+ <div class="panel"><h2>Tassi manuali (GBP, CHF, JPY)</h2><div class="mu sm">Facoltativi. Valori in % sulla base monetaria della valuta. Sostituiscono il proxy (tasso di policy) o il dato O/N del feed. Dopo una modifica conviene ricalibrare.</div><div id="mkManual" style="margin-top:10px"></div><div class="row" style="margin-top:8px"><button class="btn" id="manSave">Salva tassi manuali</button></div>
+  <div class="xs mu" style="margin-top:8px">Fonti ufficiali: <a href="https://www.bankofengland.co.uk/markets/sonia-benchmark" target="_blank" rel="noopener">SONIA – Bank of England</a> · <a href="https://www.six-group.com/en/market-data/indices/switzerland/saron.html" target="_blank" rel="noopener">SARON – SIX</a> · <a href="https://www.boj.or.jp/en/statistics/market/short/mutan/index.htm" target="_blank" rel="noopener">TONA – Bank of Japan</a></div></div>
+ <div class="panel"><h2>Impostazioni</h2><div class="grid g4">
+  <div><label>Valuta di riferimento</label><select id="stRep"><option>CHF</option><option>EUR</option><option>USD</option><option>GBP</option><option>JPY</option></select></div>
+  <div><label>Finestra di volatilità</label><select id="stVol"><option value="v20">20 giorni</option><option value="v60" selected>60 giorni</option><option value="v250">250 giorni</option></select></div>
+  <div><label>Data di valutazione</label><input id="stVal" type="date"></div>
+  <div><label>Incertezza modello A / B / C (bp annui)</label><input id="stUnc" value="1/5/25"></div></div>
+  <div style="margin-top:10px"><label>Festività aggiuntive (una per riga: VALUTA AAAA-MM-GG)</label><textarea id="stHol" style="min-height:60px" placeholder="GBP 2027-05-10"></textarea></div>
+  <div class="row" style="margin-top:8px"><button class="btn" id="stSave">Salva impostazioni</button></div></div>
+ <div class="panel"><h2>Backup e importazione</h2><div class="row"><button class="btn" id="expBtn">Mostra backup JSON</button><label class="btn" style="margin:0">Importa JSON (anche dalla vecchia dashboard)<input type="file" id="impFile" accept=".json,application/json" class="hidden"></label></div><textarea id="expBox" class="hidden" style="margin-top:8px" readonly></textarea><button class="btn hidden" id="expCopy" style="margin-top:6px">Copia negli appunti</button></div>
+</section>
+<!-- ===================== METODO ===================== -->
+<section id="v-metodo" class="hidden"><div class="panel" id="methodText"></div></section>
+</main>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+/*ENGINE*/
+</script>
+<script>
+(function(){'use strict';
+const E=window.FXE;
+const SEED=/*SEED*/null;
+const FACTORY=/*FACTORY*/null;
+const CCYS=['EUR','GBP','USD','CHF','JPY'];
+const PAIRS=[];for(let i=0;i<CCYS.length;i++)for(let j=i+1;j<CCYS.length;j++)PAIRS.push(CCYS[i]+CCYS[j]);
+const MAIN=['EURUSD','USDCHF','EURCHF','GBPUSD','EURGBP','USDJPY'];
+const PAIR_LIST=[...MAIN,...PAIRS.filter(p=>!MAIN.includes(p))];
+const LS='fxdesk-v2';
+const $=id=>document.getElementById(id);
+const S={mk:SEED,mkMeta:{src:'seed',verified:null,writtenAt:SEED.generatedAt},book:{positions:[],nextId:1},settings:{reportCcy:'CHF',manual:{},unc:{A:1,B:5,C:25},volWin:'v60',valDate:null,holidays:''},calib:JSON.parse(JSON.stringify(FACTORY)),big:null,db:null,uid:null,curves:null,bookSeg:'open',bkMode:'new'};
+// ---------------- utils ----------------
+const num=v=>{if(v==null)return NaN;let s=String(v).trim().replace(/\s/g,'');if(!s)return NaN;if(s.includes(',')&&!s.includes('.'))s=s.replace(',','.');else s=s.replace(/,/g,'');return Number(s)};
+const pipOf=p=>E.pipSize(p.slice(0,3),p.slice(3));
+const dpOf=p=>p.slice(3)==='JPY'?3:5;
+const fmt=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const sgn=(n,d=2)=>Number.isFinite(n)?(n>0?'+':'')+fmt(n,d):'—';
+const rt=(n,p)=>fmt(n,dpOf(p));
+const cls=n=>n>0?'pos':n<0?'neg':'';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pairTxt=p=>p.slice(0,3)+'/'+p.slice(3);
+const todayIso=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const valDn=()=>E.dn(S.settings.valDate||todayIso());
+const ageTxt=ms=>{if(!Number.isFinite(ms))return '—';const m=ms/6e4;if(m<60)return Math.round(m)+' min';const h=m/60;if(h<48)return fmt(h,1)+' h';return fmt(h/24,1)+' gg'};
+function toast(t){const n=$('toast');n.textContent=t;n.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>n.classList.remove('on'),3500)}
+function orderPair(a,b){return CCYS.indexOf(a)<CCYS.indexOf(b)?a+b:b+a}
+// ---------------- market ----------------
+function rebuild(){
+ const hol={};(S.settings.holidays||'').split(/\n+/).forEach(l=>{const m=l.trim().match(/^([A-Z]{3})\s+(\d{4}-\d{2}-\d{2})$/);if(m)(hol[m[1]]=hol[m[1]]||[]).push(m[2])});E.setExtraHolidays(hol);
+ S.curves=E.buildCurves(S.mk,S.settings.manual);
+}
+function usdPer(c){if(c==='USD')return 1;const v=[];for(const w of ['exdev','coinbase']){const x=S.mk?.spot?.[w]?.usd?.[c];if(Number.isFinite(x))v.push(x)}return v.length?v.reduce((a,b)=>a+b,0)/v.length:NaN}
+function getSpot(p){
+ const b=p.slice(0,3),q=p.slice(3);const big=S.big&&S.big.pairs[p];
+ const fs=E.feedSpot(S.mk,b,q);const feedT=fs&&fs.asOf?Date.parse(fs.asOf):0;
+ if(big&&Number.isFinite(big.mid)&&S.big.at>=feedT)return {mid:big.mid,at:S.big.at,src:'Bigdata.com (FMP)',prec:big.prec};
+ if(fs)return {mid:fs.mid,at:feedT,src:'Feed (exchangerate.dev + Coinbase)',prec:Math.max(0.5,fs.diffPips/2),diff:fs.diffPips};
+ return {mid:NaN,at:0,src:'—',prec:NaN};
+}
+function convert(amount,from,to){if(from===to)return amount;return amount*usdPer(to)/usdPer(from)}
+function calibInfo(p){
+ const c=S.calib[p];const curves=S.curves;const b=p.slice(0,3),q=p.slice(3);
+ if(!c){const qa=[curves[b].quality,curves[q].quality];return {grade:qa.every(x=>x==='A')?'B':'C',age:Infinity,drift:0,c:null,why:'non calibrata'}}
+ const age=Date.now()-Date.parse(c.asOf);let drift=0;for(const d in c.curveRef||{}){const r=c.curveRef[d];drift=Math.max(drift,Math.abs(E.curveRate(curves[b],+d)-r.rB)*1e4,Math.abs(E.curveRate(curves[q],+d)-r.rQ)*1e4)}
+ let g=age<864e5?'A':age<=7*864e5?'B':'C';const why=['calibrata '+ageTxt(age)+' fa'];
+ if(drift>5){g=g==='A'?'B':'C';why.push('curve variate di '+fmt(drift,1)+' bp dalla calibrazione')}
+ return {grade:g,age,drift,c,why:why.join(', ')};
+}
+function ctxFor(p,spot,valD){const b=p.slice(0,3),q=p.slice(3);const v=valD??valDn();return {base:b,quote:q,spot,spotDate:E.spotDate(v,b,q),curveB:S.curves[b],curveQ:S.curves[q],calib:S.calib[p]?{leg:S.calib[p].leg,pillars:S.calib[p].pillars}:null}}
+function uncBp(g){return S.settings.unc[g]??25}
+function uncPips(p,S0,d,g){return S0*uncBp(g)/1e4*Math.max(d,0)/360/pipOf(p)}
+/** Reference forward for pair p at value date T with spot Smid. Market table if pasted < 6h, else calibrated model. */
+function refForward(p,T,Smid){
+ const ctx=ctxFor(p,Smid);const f=E.fairForward(ctx,T);const ci=calibInfo(p);const d=T-ctx.spotDate;
+ const out={F:f.F,pts:f.points,d,ctx,f,src:'Modello CIP calibrato',grade:ci.grade,unc:uncPips(p,Smid,d,ci.grade),ci};
+ const c=S.calib[p];
+ if(c&&c.pasted&&Date.now()-Date.parse(c.asOf)<6*36e5&&c.spotDate===E.iso(ctx.spotDate)){
+  const mp=E.interpPoints(c.ptsByDays,d);if(Number.isFinite(mp)){out.model={F:f.F,pts:f.points};out.F=Smid+mp*pipOf(p);out.pts=mp;out.src='Punti di mercato incollati ('+new Date(c.asOf).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+'), interpolati linearmente';out.grade='A';out.unc=Math.max(0.1,Math.abs(mp-f.points));out.half=c.halfSpread?E.interpPoints(c.halfSpread,d):NaN}
+ }
+ return out;
+}
+// ---------------- market table parser ----------------
+const NAMES={'Overnight':'ON','Tomorrow Next':'TN','Spot Next':'SN','One Week':'1W','Two Weeks':'2W','Three Weeks':'3W','One Month':'1M','Two Months':'2M','Three Months':'3M','Four Months':'4M','Five Months':'5M','Six Months':'6M','Seven Months':'7M','Eight Months':'8M','Nine Months':'9M','Ten Months':'10M','Eleven Months':'11M','One Year':'1Y'};
+const MON={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+function parseMarket(text){
+ const t=text.replace(/ /g,' ');const N='(-?[\\d,]*\\.?\\d+)';const out={rows:{},spot:NaN,asOf:null,pair:null,src:'manuale'};
+ const pm=t.match(/\b([A-Z]{3})\s*\/\s*([A-Z]{3})\s+Forward Rates/);if(pm)out.pair=pm[1]+pm[2];
+ const sm=t.match(/Spot Rate:\s*([\d.,]+)/);if(sm)out.spot=num(sm[1].replace(/,/g,''));
+ const am=t.match(/As of:\s*(\d{1,2}):(\d{2})\s+([A-Z][a-z]{2})\s+(\d{1,2}),\s*(\d{4})/);if(am)out.asOf=new Date(Date.UTC(+am[5],MON[am[3]],+am[4],+am[1],+am[2])).toISOString();
+ for(const [name,code] of Object.entries(NAMES)){const re=new RegExp('(?:^|[^A-Za-z])'+name+'\\s+'+N+'\\s+'+N+'\\s+'+N+'\\s+'+N);const m=t.match(re);if(m){const v=m.slice(1,5).map(x=>Number(x.replace(/,/g,'')));out.rows[code]={bid:v[0],ask:v[1],mid:v[2],pts:v[3]};out.src='FXEmpire'}}
+ if(!Object.keys(out.rows).length){const re=/\b([A-Z]{6})\s+(ON|TN|SN|\d{1,2}[WMY])\s+FWD\s+(-?[\d.,]+)\s+(-?[\d.,]+)/g;let m;while((m=re.exec(t))){const b=num(m[3]),a=num(m[4]);out.rows[m[2]]={pts:(b+a)/2,ptsBid:b,ptsAsk:a};out.pair=out.pair||m[1];out.src='Investing.com'}}
+ if(!Object.keys(out.rows).length){for(const l of t.split(/\n/)){const m=l.trim().match(/^(ON|TN|SN|\d{1,2}[WMY])\s*[;:=\t ]\s*(-?[\d.,]+)\s*$/i);if(m)out.rows[m[1].toUpperCase()]={pts:num(m[2])}}}
+ return out;
+}
+function applyMarket(p,parsed,SmidFallback){
+ const b=p.slice(0,3),q=p.slice(3);const pip=pipOf(p);
+ if(parsed.pair&&parsed.pair!==p)return {err:'La tabella è per '+pairTxt(parsed.pair)+', non per '+pairTxt(p)+'.'};
+ const S0=Number.isFinite(parsed.spot)?parsed.spot:SmidFallback;if(!Number.isFinite(S0))return {err:'Spot mancante: la tabella non contiene «Spot Rate» e non c\'è un mid valido.'};
+ const asOf=parsed.asOf||new Date().toISOString();const trade=E.dn(asOf.slice(0,10));const sp=E.spotDate(trade,b,q);
+ const pts={},half={};let n=0;
+ for(const [k,r] of Object.entries(parsed.rows)){if(['ON','TN','SN'].includes(k)||!Number.isFinite(r.pts))continue;const d=E.tenorDate(k,trade,b,q)-sp;if(d<7)continue;pts[d]=r.pts;n++;if(Number.isFinite(r.bid)&&Number.isFinite(r.ask))half[d]=(r.ask-r.bid)/2/pip;else if(Number.isFinite(r.ptsBid))half[d]=Math.abs(r.ptsAsk-r.ptsBid)/2}
+ if(n<2)return {err:'Servono almeno due scadenze da 1 settimana in su. Righe riconosciute: '+Object.keys(parsed.rows).join(', ')};
+ const ctx={base:b,quote:q,spot:S0,spotDate:sp,curveB:S.curves[b],curveQ:S.curves[q]};
+ const cal=E.calibrate(ctx,S0,pts);const curveRef={};for(const d in pts)curveRef[d]={rB:E.curveRate(S.curves[b],+d),rQ:E.curveRate(S.curves[q],+d)};
+ S.calib[p]={asOf,source:parsed.src+(parsed.asOf?'':' (ora di incolla)'),spot:S0,spotDate:E.iso(sp),ptsByDays:pts,halfSpread:Object.keys(half).length?half:null,leg:cal.leg,pillars:cal.pillars,curveRef,pasted:true,on:parsed.rows.ON?.pts,tn:parsed.rows.TN?.pts};
+ saveDoc('calib');return {ok:true,n,S0,asOf};
+}
+// ---------------- persistence ----------------
+function lsGet(){try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}}
+function lsSet(){try{localStorage.setItem(LS,JSON.stringify({book:S.book,settings:S.settings,calib:S.calib,big:S.big}))}catch(e){}}
+const pending={};let writing={};
+async function saveDoc(name){lsSet();if(!S.db||!S.uid)return;pending[name]=true;if(writing[name])return;writing[name]=true;
+ try{while(pending[name]){pending[name]=false;const body=name==='book'?{positions:S.book.positions,nextId:S.book.nextId}:name==='settings'?S.settings:{pairs:S.calib};await S.db.doc('data/users/'+S.uid+'/'+name).set({...body,updatedAt:new Date().toISOString()})}}
+ catch(e){toast('Salvataggio sincronizzato non riuscito ('+(e.code||e.message)+'). I dati restano in questo browser.')}finally{writing[name]=false;renderStatus()}}
+async function sha256Hex(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function acceptMarket(doc){
+ try{if(!doc||typeof doc.raw!=='string')return;const h=await sha256Hex(doc.raw);const ok=h===doc.sha256;const mk=JSON.parse(doc.raw);if(mk.schema!=='fxdata-v1')return;
+  if(!ok){S.mkMeta.badHash=true;renderStatus();return}
+  if(Date.parse(mk.generatedAt)<Date.parse(S.mk.generatedAt))return;S.mk=mk;S.mkMeta={src:'feed',verified:true,writtenAt:doc.writtenAt||mk.generatedAt};rebuild();renderAll()}catch(e){}
+}
+async function initDb(){
+ if(!window.claude||!window.claude.use){renderStatus();return}
+ try{
+  const db=await window.claude.use('db');if(!db){renderStatus();return}S.db=db;
+  db.doc('market/latest').onSnapshot(s=>{if(s.exists)acceptMarket(s.data())},()=>{});
+  const user=await window.claude.use('user');S.uid=user?await user.id():null;
+  if(S.uid){for(const name of ['book','settings','calib']){db.doc('data/users/'+S.uid+'/'+name).onSnapshot(s=>{if(s.metadata&&s.metadata.hasPendingWrites)return;if(!s.exists){if(name==='book'&&S.book.positions.length)saveDoc('book');return}const d=s.data();
+   if(name==='book'){S.book={positions:Array.isArray(d.positions)?JSON.parse(JSON.stringify(d.positions)):[],nextId:d.nextId||1}}
+   else if(name==='settings'){S.settings=Object.assign({},S.settings,JSON.parse(JSON.stringify(d)));delete S.settings.updatedAt;rebuild()}
+   else if(name==='calib'&&d.pairs){S.calib=JSON.parse(JSON.stringify(d.pairs))}
+   lsSet();renderAll()},e=>{toast('Archivio sincronizzato non raggiungibile ('+e.code+').')})}}
+  renderStatus();
+ }catch(e){renderStatus()}
+}
+// ---------------- Bigdata spot ----------------
+async function refreshBigdata(){
+ let mcp=null;try{mcp=window.claude&&window.claude.use?await window.claude.use('mcp'):null}catch(e){}
+ if(!mcp){toast('Connettore Bigdata.com non disponibile in questa vista.');return}
+ toast('Richiesta dello spot a Bigdata.com…');
+ try{const r=await mcp.callTool('Bigdata.com','bigdata_country_tearsheet',{country:'EMU'},{cache:false});let txt=r.payload;if(typeof txt!=='string')txt=(r.content||[]).map(c=>c.text||'').join('\n')||JSON.stringify(txt);
+  const pairs={};const ref=txt.match(/Spot price \(current\)\s*\|\s*([\d.]+)/);const at=txt.match(/Spot Overview[\s\S]*?As of ([A-Za-z]+ \d{1,2}, \d{4} \d{1,2}:\d{2} [AP]M) UTC/);
+  const eu=ref?Number(ref[1]):NaN;if(Number.isFinite(eu))pairs.EURUSD={mid:eu,prec:0.05};
+  const cr={};txt.replace(/\|\s*EUR\/([A-Z]{3})\s*\|\s*([\d.]+)\s*\|/g,(m,c,v)=>{cr[c]=Number(v)});
+  if(Number.isFinite(cr.GBP))pairs.EURGBP={mid:cr.GBP,prec:0.5};if(Number.isFinite(cr.CHF))pairs.EURCHF={mid:cr.CHF,prec:0.5};
+  if(Number.isFinite(eu)){if(cr.GBP)pairs.GBPUSD={mid:eu/cr.GBP,prec:1.6};if(cr.CHF)pairs.USDCHF={mid:cr.CHF/eu,prec:0.9};if(cr.JPY)pairs.USDJPY={mid:cr.JPY/eu,prec:0.5}}
+  if(!Object.keys(pairs).length)throw {code:'parse',message:'formato non riconosciuto'};
+  const tAt=at?Date.parse(at[1]+' UTC'):Date.now();S.big={at:Number.isFinite(tAt)?tAt:Date.now(),pairs};lsSet();renderAll();toast('Spot aggiornato da Bigdata.com ('+Object.keys(pairs).length+' coppie).');
+ }catch(e){const c=e&&e.code;toast(c==='needs_reauth'?'Ricollega Bigdata.com in claude.ai → Impostazioni → Connettori.':c==='server_not_connected'?'Aggiungi Bigdata.com in claude.ai → Impostazioni → Connettori.':c==='approval_required'?'Serve la tua approvazione per usare Bigdata.com da questa pagina.':'Bigdata.com: '+(e&&e.message||c||'errore'))}
+}
+// ---------------- valuation ----------------
+function valuePos(pos){
+ const p=pos.pair,sp=getSpot(p);const T=E.dn(pos.T);const ctx=ctxFor(p,sp.mid);const ci=calibInfo(p);
+ const f=E.fairForward(ctx,T);const m=E.mtm(ctx,{side:pos.side,N:pos.N,K:pos.K,T},f.F);
+ const pip=pipOf(p),q=p.slice(3);
+ const bump=(fn)=>{const c2=fn(ctx);const f2=E.fairForward(c2,T);return E.mtm(c2,{side:pos.side,N:pos.N,K:pos.K,T},f2.F).pv-m.pv};
+ const shiftCurve=(cv,bp)=>Object.assign({},cv,{pillars:cv.pillars.map(x=>({...x,rate:x.rate+bp/1e4}))});
+ const sens={pip:bump(c=>({...c,spot:c.spot+pip})),pct:bump(c=>({...c,spot:c.spot*1.01})),bpQ:bump(c=>({...c,curveQ:shiftCurve(c.curveQ,1)})),bpB:bump(c=>({...c,curveB:shiftCurve(c.curveB,1)}))};
+ const d=T-ctx.spotDate;const g=sp.at&&Date.now()-sp.at<36e5?ci.grade:(ci.grade==='A'?'B':ci.grade);
+ const uncP=uncPips(p,sp.mid,d,ci.grade)+(sp.prec||0);
+ return {pos,p,sp,ctx,T,d,f,m,sens,ci,grade:g,uncMoney:uncP*pip*pos.N,pvRep:convert(m.pv,q,S.settings.reportCcy),days:T-valDn()};
+}
+// ---------------- render: status ----------------
+function renderStatus(){
+ const mk=S.mk,gen=Date.parse(mk.generatedAt),age=Date.now()-gen;const chips=[];
+ chips.push(`<span class="chip ${S.mkMeta.src==='feed'?(age<36*36e5?'ok':'warn'):'warn'}" title="Dati di mercato">${S.mkMeta.src==='feed'?'Tassi: feed verificato':'Tassi: istantanea iniziale'} · ${new Date(gen).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})}</span>`);
+ if(S.mkMeta.badHash)chips.push('<span class="chip bad">Feed scartato: SHA-256 non corrisponde</span>');
+ chips.push(S.db&&S.uid?'<span class="chip ok">Sincronizzato</span>':'<span class="chip warn">Solo questo browser</span>');
+ if(S.big)chips.push(`<span class="chip">Bigdata ${ageTxt(Date.now()-S.big.at)} fa</span>`);
+ $('status').innerHTML=chips.join('');
+}
+// ---------------- render: book ----------------
+function renderBook(){
+ $('valDateNote').textContent='Valutazione al '+E.iso(valDn())+' · valuta di riferimento '+S.settings.reportCcy;
+ const open=S.book.positions.filter(x=>x.status!=='closed'),closed=S.book.positions.filter(x=>x.status==='closed');
+ const vals=open.map(valuePos);const rep=S.settings.reportCcy;
+ const tot=vals.reduce((a,v)=>a+(Number.isFinite(v.pvRep)?v.pvRep:0),0);const byQ={};vals.forEach(v=>{const q=v.p.slice(3);byQ[q]=(byQ[q]||0)+v.m.pv});
+ const realized=closed.reduce((a,x)=>a+(Number.isFinite(x.close?.cash)?convert(x.close.cash,x.pair.slice(3),rep):0),0);
+ const next=vals.slice().sort((a,b)=>a.T-b.T)[0];
+ $('kpis').innerHTML=[['Posizioni aperte',open.length],['MTM aperto ('+rep+')',`<span class="${cls(tot)}">${sgn(tot,0)}</span>`],['Realizzato confermato ('+rep+')',`<span class="${cls(realized)}">${sgn(realized,0)}</span>`],['Prossima scadenza',next?`${next.pos.T} <span class="mu sm">(${next.days} gg)</span>`:'—']].map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('')+
+ (Object.keys(byQ).length?`<div class="kpi" style="grid-column:1/-1"><div class="l">MTM per valuta quotata (non convertito)</div><div class="row" style="margin-top:4px">${Object.entries(byQ).map(([q,v])=>`<span class="chip"><b class="${cls(v)}">${sgn(v,0)}</b> ${q}</span>`).join('')}</div></div>`:'');
+ document.querySelectorAll('#bookSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===S.bookSeg));
+ if(S.bookSeg==='open'){
+  if(!vals.length){$('bookTable').innerHTML='<div class="mu sm" style="padding:20px;text-align:center">Nessuna posizione aperta. Usa «+ Nuova posizione» oppure importa il backup della vecchia dashboard da «Mercato e dati».</div>';return}
+  vals.sort((a,b)=>a.T-b.T);
+  $('bookTable').innerHTML=`<div class="tw tbl-desktop"><table><thead><tr><th>Posizione</th><th>Direzione</th><th class="r">Nozionale</th><th class="r">Strike K</th><th>Scadenza</th><th class="r">Spot</th><th class="r">Forward fair</th><th class="r">Punti</th><th class="r">MTM (quotata)</th><th class="r">MTM (${rep})</th><th>Qualità</th></tr></thead><tbody>${vals.map(v=>`<tr class="click" data-id="${v.pos.id}"><td><b>${pairTxt(v.p)}</b> <span class="mu xs">#${v.pos.id} ${esc(v.pos.ref||v.pos.cpty||'')}</span></td><td>${v.pos.side==='SELL'?'Vendo':'Compro'} ${v.p.slice(0,3)}</td><td class="r">${fmt(v.pos.N,0)}</td><td class="r">${rt(v.pos.K,v.p)}</td><td>${v.pos.T} <span class="mu xs">${v.days} gg</span></td><td class="r">${rt(v.sp.mid,v.p)}</td><td class="r">${rt(v.f.F,v.p)}</td><td class="r">${sgn(v.f.points,2)}</td><td class="r ${cls(v.m.pv)}"><b>${sgn(v.m.pv,0)}</b> ${v.p.slice(3)}</td><td class="r ${cls(v.pvRep)}">${sgn(v.pvRep,0)}</td><td><span class="tag q${v.grade}">${v.grade}</span> <span class="mu xs">±${fmt(v.uncMoney,0)}</span></td></tr>`).join('')}</tbody></table></div>
+  <div class="cards">${vals.map(v=>`<div class="card click" data-id="${v.pos.id}"><div class="h"><span>${pairTxt(v.p)} · ${v.pos.side==='SELL'?'Vendo':'Compro'} ${fmt(v.pos.N,0)} ${v.p.slice(0,3)}</span><span class="tag q${v.grade}">${v.grade}</span></div><div class="kv" style="margin-top:6px"><div>Strike / fair</div><div>${rt(v.pos.K,v.p)} / ${rt(v.f.F,v.p)}</div><div>Scadenza</div><div>${v.pos.T} (${v.days} gg)</div><div>MTM</div><div class="${cls(v.m.pv)}">${sgn(v.m.pv,0)} ${v.p.slice(3)} · ${sgn(v.pvRep,0)} ${rep}</div></div></div>`).join('')}</div>
+  <div class="mu xs" style="margin-top:8px">MTM = segno × N × (K − F fair) × DF(spot, scadenza) nella valuta quotata. Positivo = a tuo favore. Qualità A/B/C e banda ± spiegate in «Metodo». Tocca una riga per dettaglio, chiusura anticipata e verifica con la banca.</div>`;
+ }else{
+  if(!closed.length){$('bookTable').innerHTML='<div class="mu sm" style="padding:20px;text-align:center">Nessuna posizione chiusa.</div>';return}
+  $('bookTable').innerHTML=`<div class="tw"><table><thead><tr><th>Posizione</th><th>Direzione</th><th class="r">Nozionale</th><th class="r">K</th><th>Scadenza orig.</th><th>Chiusura</th><th>Modalità</th><th class="r">Cambio chiusura</th><th class="r">Realizzato confermato</th><th class="r">(${rep})</th><th></th></tr></thead><tbody>${closed.map(x=>{const c=x.close||{};const r=Number.isFinite(c.cash)?convert(c.cash,x.pair.slice(3),rep):NaN;return `<tr><td><b>${pairTxt(x.pair)}</b> <span class="mu xs">#${x.id} ${esc(x.ref||'')}</span></td><td>${x.side==='SELL'?'Vendo':'Compro'} ${x.pair.slice(0,3)}</td><td class="r">${fmt(x.N,0)}</td><td class="r">${rt(x.K,x.pair)}</td><td>${x.T}</td><td>${c.date||'—'}</td><td>${esc(c.method||'')}</td><td class="r">${Number.isFinite(c.rate)?rt(c.rate,x.pair):'—'}</td><td class="r ${cls(c.cash)}">${Number.isFinite(c.cash)?sgn(c.cash,2)+' '+x.pair.slice(3):'<span class="amb">non confermato</span>'}</td><td class="r ${cls(r)}">${sgn(r,0)}</td><td><button class="btn sm" data-reopen="${x.id}">Riapri</button> <button class="btn sm dan" data-del="${x.id}">×</button></td></tr>`}).join('')}</tbody></table></div>`;
+ }
+}
+// ---------------- position modal ----------------
+function pairOptions(sel){return PAIR_LIST.map(p=>`<option value="${p}" ${p===sel?'selected':''}>${pairTxt(p)}</option>`).join('')}
+function openForm(pos){
+ const x=pos||{pair:'EURUSD',side:'SELL',N:'',K:'',trade:E.iso(valDn()),T:'',cpty:'',ref:'',notes:''};
+ $('modalBox').innerHTML=`<h2>${pos?'Modifica posizione #'+pos.id:'Nuova posizione'}</h2><div class="grid g2">
+ <div><label>Coppia</label><select id="fPair">${pairOptions(x.pair)}</select></div>
+ <div><label>Direzione (sulla valuta base)</label><select id="fSide"><option value="SELL" ${x.side==='SELL'?'selected':''}>Vendo base a termine (ricevo quotata)</option><option value="BUY" ${x.side==='BUY'?'selected':''}>Compro base a termine (pago quotata)</option></select></div>
+ <div><label>Nozionale (valuta base)</label><input id="fN" inputmode="decimal" value="${x.N}"></div>
+ <div><label>Cambio a termine contrattuale K</label><input id="fK" inputmode="decimal" value="${x.K}"></div>
+ <div><label>Data di negoziazione</label><input id="fTrade" type="date" value="${x.trade||''}"></div>
+ <div><label>Data valuta (scadenza)</label><input id="fT" type="date" value="${x.T||''}"><div class="row" style="margin-top:4px;gap:3px">${['1W','1M','2M','3M','6M','9M','1Y'].map(t=>`<button class="btn sm" data-ten="${t}">${t}</button>`).join('')}</div><div class="xs mu" id="fTnote"></div></div>
+ <div><label>Controparte</label><input id="fCp" value="${esc(x.cpty)}"></div><div><label>Riferimento</label><input id="fRef" value="${esc(x.ref)}"></div>
+ <div style="grid-column:1/-1"><label>Note</label><input id="fNotes" value="${esc(x.notes)}"></div></div>
+ <div class="note bad hidden" id="fErr" style="margin-top:10px"></div>
+ <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="fCancel">Annulla</button><button class="btn pri" id="fSave">Salva</button></div>`;
+ $('modal').classList.add('on');
+ const tnote=()=>{const p=$('fPair').value,T=$('fT').value;if(!T){$('fTnote').textContent='';return}const tr=E.dn($('fTrade').value||E.iso(valDn()));const cal=[p.slice(0,3),p.slice(3)];$('fTnote').textContent=E.isBD(E.dn(T),cal)?'Giorno lavorativo valido per '+cal.join(' e ')+'.':'Attenzione: non è un giorno lavorativo per '+cal.join('/')+'.'};
+ $('modalBox').querySelectorAll('[data-ten]').forEach(b=>b.onclick=e=>{e.preventDefault();const p=$('fPair').value;const tr=E.dn($('fTrade').value||E.iso(valDn()));$('fT').value=E.iso(E.tenorDate(b.dataset.ten,tr,p.slice(0,3),p.slice(3)));tnote()});
+ $('fT').onchange=tnote;$('fPair').onchange=tnote;tnote();
+ $('fCancel').onclick=()=>$('modal').classList.remove('on');
+ $('fSave').onclick=()=>{const y={pair:$('fPair').value,side:$('fSide').value,N:num($('fN').value),K:num($('fK').value),trade:$('fTrade').value,T:$('fT').value,cpty:$('fCp').value.trim(),ref:$('fRef').value.trim(),notes:$('fNotes').value.trim()};
+  const err=[];if(!(y.N>0))err.push('nozionale positivo');if(!(y.K>0))err.push('cambio K positivo');if(!/^\d{4}-\d\d-\d\d$/.test(y.T))err.push('data valuta');if(y.trade&&y.T&&y.T<y.trade)err.push('la scadenza non può precedere la negoziazione');
+  if(err.length){$('fErr').textContent='Controlla: '+err.join(', ')+'.';$('fErr').classList.remove('hidden');return}
+  if(pos){Object.assign(pos,y)}else{S.book.positions.push({id:S.book.nextId++,status:'open',...y})}
+  saveDoc('book');$('modal').classList.remove('on');renderAll();toast('Posizione salvata.')};
+}
+function openDetail(id){
+ const pos=S.book.positions.find(x=>x.id===id);if(!pos)return;const v=valuePos(pos);const p=v.p,q=p.slice(3),b=p.slice(0,3),pip=pipOf(p);
+ const sp=v.ctx.spotDate;const ed=E.earlyDelivery(v.ctx,{side:pos.side,N:pos.N,K:pos.K,T:v.T},Math.max(sp,valDn()));
+ const T2=E.tenorDate('1M',v.T-2,b,q);const ex=E.extension(v.ctx,{side:pos.side,N:pos.N,K:pos.K,T:v.T},T2);
+ const r=E.ratesAt(v.ctx,v.d);const vol=S.mk.vol?.[p]?.[S.settings.volWin];const tau=Math.max(v.T-valDn(),0)/365;
+ $('modalBox').innerHTML=`<div class="row" style="justify-content:space-between"><h2>#${pos.id} · ${pairTxt(p)} · ${pos.side==='SELL'?'Vendo':'Compro'} ${fmt(pos.N,0)} ${b} a ${rt(pos.K,p)}</h2><button class="btn sm" id="dClose">✕</button></div>
+ <div class="grid g2"><div class="res"><div class="mu sm">MTM a data spot (${E.iso(sp)})</div><div class="big ${cls(v.m.pv)}">${sgn(v.m.pv,2)} ${q}</div><div class="sm">${sgn(v.pvRep,2)} ${S.settings.reportCcy} · flusso a scadenza ${sgn(v.m.cfT,2)} ${q}</div><div class="sm" style="margin-top:6px"><span class="tag q${v.grade}">${v.grade}</span> incertezza ±${fmt(v.uncMoney,0)} ${q} · ${esc(v.ci.why)}</div></div>
+ <div class="kv"><div>Spot (${esc(v.sp.src)})</div><div>${rt(v.sp.mid,p)}</div><div>Data valuta / giorni da spot</div><div>${pos.T} / ${v.d}</div><div>Tasso ${b} (incl. spread)</div><div>${fmt(r.rB*100,4)}%</div><div>Tasso ${q} (incl. spread)</div><div>${fmt(r.rQ*100,4)}%</div><div>Spread calibrazione (${r.leg==='base'?b:q})</div><div>${sgn(r.s*1e4,2)} bp</div><div>Forward fair</div><div>${rt(v.f.F,p)} (${sgn(v.f.points,2)} pips)</div><div>DF ${q} spot→scadenza</div><div>${fmt(v.m.df,6)}</div></div></div>
+ <h3>Sensitività del MTM (${q})</h3><div class="kv"><div>Spot +1 pip</div><div class="${cls(v.sens.pip)}">${sgn(v.sens.pip,2)}</div><div>Spot +1%</div><div class="${cls(v.sens.pct)}">${sgn(v.sens.pct,0)}</div><div>Tassi ${q} +1 bp</div><div>${sgn(v.sens.bpQ,2)}</div><div>Tassi ${b} +1 bp</div><div>${sgn(v.sens.bpB,2)}</div></div>
+ <h3>Uscire o modificare oggi, a prezzi fair (mid)</h3><div class="kv">
+ <div>Chiusura con forward opposto (close-out): P&amp;L a scadenza / valore oggi</div><div class="${cls(v.m.cfT)}">${sgn(v.m.cfT,2)} / ${sgn(v.m.pv,2)} ${q}</div>
+ <div>Consegna anticipata al ${E.iso(Math.max(sp,valDn()))}: cambio esatto (P&amp;L attualizzato)</div><div>${rt(ed.Kexact,p)}</div>
+ <div>… cambio «semplificato» K − punti swap (prassi bancaria frequente)</div><div>${rt(ed.Ksimple,p)} <span class="mu xs">(${sgn(ed.diff/pip,2)} pips)</span></div>
+ <div>Proroga al ${E.iso(T2)}: cambio esatto (P&amp;L capitalizzato)</div><div>${rt(ex.Kexact,p)}</div><div>… cambio semplificato K + punti swap</div><div>${rt(ex.Ksimple,p)} <span class="mu xs">(${sgn(ex.diff/pip,2)} pips)</span></div></div>
+ ${Number.isFinite(vol)&&tau>0?`<h3>Distribuzione statistica dello spot a scadenza</h3><div class="sm">Volatilità storica ${S.settings.volWin.slice(1)} gg: ${fmt(vol*100,2)}%. Probabilità che lo spot a scadenza sia ${pos.side==='SELL'?'sotto':'sopra'} K (copertura «vincente» a posteriori): <b>${fmt(100*(pos.side==='SELL'?1-E.probAbove(v.f.F,pos.K,vol,tau):E.probAbove(v.f.F,pos.K,vol,tau)),1)}%</b>. Intervallo 90%: ${rt(E.cone(v.f.F,vol,tau,1.6449).lo,p)} – ${rt(E.cone(v.f.F,vol,tau,1.6449).hi,p)}. Statistica centrata sul forward, non una previsione.</div>`:''}
+ <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" data-bk="closeout">Verifica close-out con la banca</button><button class="btn" data-bk="early">Verifica consegna anticipata</button><button class="btn" data-bk="ext">Verifica proroga</button></div>
+ <hr><div class="row" style="justify-content:space-between"><div class="row"><button class="btn" id="dEdit">Modifica</button><button class="btn dan" id="dDel">Elimina</button></div><button class="btn pri" id="dReg">Registra chiusura…</button></div>`;
+ $('modal').classList.add('on');
+ $('dClose').onclick=()=>$('modal').classList.remove('on');$('dEdit').onclick=()=>openForm(pos);
+ $('dDel').onclick=()=>{if($('dDel').dataset.c){S.book.positions=S.book.positions.filter(x=>x.id!==id);saveDoc('book');$('modal').classList.remove('on');renderAll();toast('Posizione eliminata.')}else{$('dDel').dataset.c=1;$('dDel').textContent='Conferma eliminazione'}};
+ $('modalBox').querySelectorAll('[data-bk]').forEach(bn=>bn.onclick=()=>{$('modal').classList.remove('on');S.bkMode=bn.dataset.bk;S.bkPos=id;location.hash='banca';renderBankForm()});
+ $('dReg').onclick=()=>openRegister(pos,v);
+}
+function openRegister(pos,v){
+ $('modalBox').innerHTML=`<h2>Registra chiusura #${pos.id} · ${pairTxt(pos.pair)}</h2><div class="mu sm">Inserisci il risultato economico confermato dalla banca (prima dei costi). Non viene dedotto dal cambio: la conferma bancaria è l'unica fonte.</div><div class="grid g2" style="margin-top:10px">
+ <div><label>Data</label><input id="rD" type="date" value="${E.iso(valDn())}"></div><div><label>Modalità</label><select id="rM"><option>Scadenza naturale</option><option>Close-out anticipato</option><option>Consegna anticipata</option><option>Proroga (chiusura della vecchia)</option></select></div>
+ <div><label>Cambio applicato (facoltativo)</label><input id="rR" inputmode="decimal"></div><div><label>P&amp;L realizzato confermato (${pos.pair.slice(3)})</label><input id="rC" inputmode="decimal" placeholder="riferimento fair oggi: ${fmt(v.m.pv,2)}"></div></div>
+ <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="rX">Annulla</button><button class="btn pri" id="rOk">Chiudi posizione</button></div>`;
+ $('rX').onclick=()=>$('modal').classList.remove('on');
+ $('rOk').onclick=()=>{const c=num($('rC').value);pos.status='closed';pos.close={date:$('rD').value,method:$('rM').value,rate:num($('rR').value),cash:Number.isFinite(c)?c:null};saveDoc('book');$('modal').classList.remove('on');S.bookSeg='closed';renderAll();toast('Posizione spostata nello storico.')};
+}
+// ---------------- bank check ----------------
+function renderBankForm(){
+ document.querySelectorAll('#bkMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.bkMode));
+ const open=S.book.positions.filter(x=>x.status!=='closed');const m=S.bkMode;
+ document.querySelectorAll('.bkNewOnly').forEach(e=>e.classList.toggle('hidden',m!=='new'));
+ $('bkFbLabel').textContent=m==='new'?'Cambio a termine (outright) proposto':m==='closeout'?'Cambio del forward opposto proposto (per chiudere)':m==='early'?'Cambio proposto per la consegna anticipata':'Cambio proposto per la data prorogata';
+ if(m==='new'){$('bkForm').innerHTML=`<div><label>Coppia</label><select id="bkPair">${pairOptions(S.bkPair||'EURUSD')}</select></div><div><label>Cosa fai tu</label><select id="bkSide"><option value="SELL">Vendo base a termine</option><option value="BUY">Compro base a termine</option></select></div><div><label>Nozionale (valuta base)</label><input id="bkN" inputmode="decimal" value="1000000"></div><div><label>Data valuta</label><div class="row" style="gap:4px"><select id="bkTen" style="flex:1"><option value="">Data…</option><option>1W</option><option>1M</option><option>2M</option><option selected>3M</option><option>6M</option><option>9M</option><option>1Y</option></select><input id="bkT" type="date" style="flex:1.4"></div></div>`;
+  $('bkTen').onchange=()=>{const p=$('bkPair').value;if($('bkTen').value)$('bkT').value=E.iso(E.tenorDate($('bkTen').value,valDn(),p.slice(0,3),p.slice(3)))};$('bkTen').onchange();
+  $('bkPair').onchange=()=>{S.bkPair=$('bkPair').value;$('bkTen').onchange();prefillMid()};}
+ else{if(!open.length){$('bkForm').innerHTML='<div class="mu sm" style="grid-column:1/-1">Nessuna posizione aperta: registra prima la posizione da verificare.</div>'}
+  else{const sel=S.bkPos&&open.some(x=>x.id===S.bkPos)?S.bkPos:open[0].id;
+   $('bkForm').innerHTML=`<div style="grid-column:1/-1"><label>Posizione</label><select id="bkPosSel">${open.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>#${x.id} ${pairTxt(x.pair)} · ${x.side==='SELL'?'Vendo':'Compro'} ${fmt(x.N,0)} a ${rt(x.K,x.pair)} · ${x.T}</option>`).join('')}</select></div>`+(m==='closeout'?'':`<div><label>${m==='early'?'Nuova data valuta anticipata':'Nuova data valuta prorogata'}</label><input id="bkT1" type="date"></div><div><label>Rapide</label><div class="row" style="gap:4px">${m==='early'?'<button class="btn sm" data-q="spot">Data spot</button>':'<button class="btn sm" data-q="1M">+1M</button><button class="btn sm" data-q="3M">+3M</button>'}</div></div>`);
+   $('bkPosSel').onchange=()=>{S.bkPos=+$('bkPosSel').value;prefillMid()};S.bkPos=sel;
+   $('bkForm').querySelectorAll('[data-q]').forEach(b=>b.onclick=e=>{e.preventDefault();const pos=S.book.positions.find(x=>x.id===+$('bkPosSel').value);const ba=pos.pair.slice(0,3),qu=pos.pair.slice(3);
+    $('bkT1').value=b.dataset.q==='spot'?E.iso(E.spotDate(valDn(),ba,qu)):E.iso(E.tenorDate(b.dataset.q,E.dn(pos.T)-2,ba,qu))});}}
+ if(!$('bkTime').value){const d=new Date();$('bkTime').value=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+ prefillMid();
+}
+function bkPair(){if(S.bkMode==='new')return $('bkPair')?.value||'EURUSD';const pos=S.book.positions.find(x=>x.id===+($('bkPosSel')?.value));return pos?pos.pair:'EURUSD'}
+function prefillMid(){const p=bkPair();const sp=getSpot(p);const c=S.calib[p];
+ let mid=sp.mid,src=sp.src+(sp.at?' · '+ageTxt(Date.now()-sp.at)+' fa':'');
+ if(c&&c.pasted&&Date.now()-Date.parse(c.asOf)<6*36e5&&Number.isFinite(c.spot)){mid=c.spot;src='Tabella incollata '+new Date(c.asOf).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
+ $('bkSmid').value=Number.isFinite(mid)?mid.toFixed(dpOf(p)):'';$('bkSmidSrc').textContent=src+'. Se la quotazione è di un altro momento, inserisci il mid di quell\'istante.';
+ const slug=(p.slice(0,3)+'-'+p.slice(3)).toLowerCase();$('bkFxeLink').href='https://www.fxempire.com/currencies/'+slug+'/forward-rates';}
+function bankCompute(){
+ const p=bkPair(),pip=pipOf(p),q=p.slice(3),b=p.slice(0,3);const Fb=num($('bkFb').value),Smid=num($('bkSmid').value);const m=S.bkMode;
+ if(!(Fb>0)||!(Smid>0)){$('bkOut').innerHTML='<div class="note bad">Servono il cambio proposto dalla banca e lo spot mid.</div>';return}
+ let side,N,T,Ffair,refInfo,extra='',label;
+ if(m==='new'){side=$('bkSide').value;N=num($('bkN').value);T=E.dn($('bkT').value);if(!(N>0)||!Number.isFinite(T)){$('bkOut').innerHTML='<div class="note bad">Controlla nozionale e data valuta.</div>';return}
+  refInfo=refForward(p,T,Smid);Ffair=refInfo.F;label='Forward mid alla data valuta';}
+ else{const pos=S.book.positions.find(x=>x.id===+$('bkPosSel').value);if(!pos)return;N=pos.N;const T0=E.dn(pos.T);
+  if(m==='closeout'){side=pos.side==='SELL'?'BUY':'SELL';T=T0;refInfo=refForward(p,T,Smid);Ffair=refInfo.F;label='Forward mid alla scadenza originale';
+   const sg=pos.side==='SELL'?1:-1;const df=E.dfQuote(refInfo.ctx,T);extra=`<div>P&amp;L a scadenza con il cambio della banca</div><div class="${cls(sg*N*(pos.K-Fb))}">${sgn(sg*N*(pos.K-Fb),2)} ${q}</div><div>P&amp;L a scadenza al mid</div><div class="${cls(sg*N*(pos.K-Ffair))}">${sgn(sg*N*(pos.K-Ffair),2)} ${q}</div><div>Se liquidato subito, valore attualizzato (DF ${fmt(df,6)})</div><div>${sgn(sg*N*(pos.K-Fb)*df,2)} ${q}</div>`}
+  else{const T1=E.dn($('bkT1').value);if(!Number.isFinite(T1)){$('bkOut').innerHTML='<div class="note bad">Inserisci la nuova data valuta.</div>';return}
+   const r1=refForward(p,T1,Smid),r0=refForward(p,T0,Smid);refInfo=Object.assign({},r0.grade<r1.grade?r1:r0);delete refInfo.model;refInfo.unc=Math.hypot(r0.unc,r1.unc);side=pos.side;
+   const P={side:pos.side,N,K:pos.K,T:T0};
+   if(m==='early'){if(T1>=T0){$('bkOut').innerHTML='<div class="note bad">La consegna anticipata deve essere prima della scadenza originale.</div>';return}const ed=E.earlyDelivery(r0.ctx,P,T1,r1.F,r0.F);Ffair=ed.Kexact;T=T1;label='Cambio fair per la consegna anticipata';
+    extra=`<div>Punti swap tra ${E.iso(T1)} e ${pos.T}</div><div>${sgn(ed.swapPts,2)} pips</div><div>Cambio «semplificato» K − punti swap</div><div>${rt(ed.Ksimple,p)}</div><div>Differenza esatto − semplificato</div><div>${sgn(ed.diff/pip,2)} pips = finanziamento del P&amp;L</div>`}
+   else{if(T1<=T0){$('bkOut').innerHTML='<div class="note bad">La proroga deve essere dopo la scadenza originale.</div>';return}const ex=E.extension(r0.ctx,P,T1,r0.F,r1.F);Ffair=ex.Kexact;T=T1;label='Cambio fair per la proroga (P&L capitalizzato)';
+    extra=`<div>Punti swap tra ${pos.T} e ${E.iso(T1)}</div><div>${sgn(ex.swapPts,2)} pips</div><div>Cambio «semplificato» K + punti swap</div><div>${rt(ex.Ksimple,p)}</div><div>Alternativa: liquidare il P&amp;L a ${pos.T} e aprire al forward</div><div>${sgn(ex.settleNowAlt,2)} ${q} + nuovo a ${rt(r1.F,p)}</div>`}}}
+ const d=T-refInfo.ctx.spotDate;const Sb=num($('bkSb').value),Pb=num($('bkPb').value);
+ const r=E.bankCheck({side,N,Ffair,Fbank:Fb,Smid,Sbank:m==='new'?Sb:NaN,Pbank:m==='new'?Pb:NaN,Pfair:refInfo.pts,pip,d});
+ const u=refInfo.unc;const lo=r.marginPips-u,hi=r.marginPips+u;
+ const verdict=lo>0?`La banca applica un margine compreso tra <b>${fmt(lo,1)}</b> e <b>${fmt(hi,1)}</b> pips rispetto al mid.`:hi<0?'Il cambio proposto è migliore del mid stimato: verifica che la quotazione e il mid si riferiscano allo stesso istante.':`Il margine è indistinguibile da zero entro l'incertezza del riferimento (±${fmt(u,1)} pips).`;
+ const rB=E.ratesAt(refInfo.ctx,d);const leg=E.calibLeg(b,q);
+ const Simp=Number.isFinite(Sb)?Sb:Smid;const imp=m==='new'&&d>0?E.impliedRate(Simp,Fb,d,leg==='quote'?rB.rB:rB.rQ,E.basis(b),E.basis(q),leg):NaN;
+ $('bkOut').innerHTML=`<div class="res"><div class="mu sm">Margine a tuo carico rispetto al mid</div><div class="big ${r.marginPips>0?'neg':'pos'}">${sgn(r.marginPips,1)} pips</div><div class="sm">${sgn(r.money,2)} ${q} · ${sgn(r.moneyBase,2)} ${b} · ${sgn(r.bpNotional,2)} bp del nozionale</div><div class="sm" style="margin-top:6px">${verdict}</div></div>
+ <div class="kv" style="margin-top:12px"><div>${label}</div><div>${rt(Ffair,p)}</div><div>Cambio proposto dalla banca</div><div>${rt(Fb,p)}</div><div>Riferimento</div><div><span class="tag q${refInfo.grade}">${refInfo.grade}</span> ${esc(refInfo.src)}</div><div>Incertezza del riferimento</div><div>±${fmt(u,2)} pips</div>${Number.isFinite(refInfo.half)?`<div>Metà bid/ask interbancario indicativo</div><div>${fmt(refInfo.half,2)} pips</div>`:''}${refInfo.model?`<div>Controllo incrociato: modello CIP calibrato</div><div>${rt(refInfo.model.F,p)} (${sgn(refInfo.model.pts,2)} pips)</div>`:''}<div>Giorni dalla data spot (${E.iso(refInfo.ctx.spotDate)})</div><div>${d}</div>
+ ${Number.isFinite(r.spotMarginPips)?`<div>di cui sullo spot</div><div>${sgn(r.spotMarginPips,1)} pips</div><div>di cui sui punti</div><div>${sgn(r.ptsMarginPips,1)} pips (${sgn(r.ptsMarginBpPa,1)} bp annui)</div><div>Coerenza spot + punti = outright</div><div class="${Math.abs(r.consistency/pip)>0.5?'neg':''}">${sgn(r.consistency/pip,2)} pips</div>`:''}
+ ${Number.isFinite(imp)?`<div>Tasso ${leg==='quote'?q:b} implicito nei punti della banca (spot ${Number.isFinite(Sb)?'della banca':'mid'}, altra gamba al fair)</div><div>${fmt(imp*100,3)}% (fair ${fmt((leg==='quote'?rB.rQ:rB.rB)*100,3)}%)</div>`:''}${extra}</div>
+ <div class="mu xs" style="margin-top:10px">Margine positivo = costo per te. Convenzione: se compri la valuta base, un cambio più alto ti penalizza; se la vendi, ti penalizza un cambio più basso. Il risultato è affidabile solo se mid e quotazione si riferiscono allo stesso istante: lo spot si muove di alcuni pips al minuto.</div>`;
+}
+// ---------------- simulator ----------------
+function simCompute(){
+ const p=$('smPair').value,b=p.slice(0,3),q=p.slice(3),pip=pipOf(p),side=$('smSide').value,N=num($('smN').value);let T=$('smDate').value?E.dn($('smDate').value):NaN;
+ if($('smTenor').value){T=E.tenorDate($('smTenor').value,valDn(),b,q);$('smDate').value=E.iso(T)}
+ const sp=getSpot(p);if(!Number.isFinite(T)||!(N>0)||!Number.isFinite(sp.mid)){$('smOut').innerHTML='<div class="panel note bad">Dati incompleti.</div>';return}
+ const ref=refForward(p,T,sp.mid);const ctx=ref.ctx,d=T-ctx.spotDate,r=E.ratesAt(ctx,d);const F=ref.F;
+ const carry=(F/sp.mid-1)*360/d*100;const vol=S.mk.vol?.[p]?.[S.settings.volWin];const tau=(T-valDn())/365;const sg=side==='SELL'?1:-1;
+ const rows=['1W','1M','2M','3M','6M','9M','1Y'].map(t=>{const Tt=E.tenorDate(t,valDn(),b,q);const rr=refForward(p,Tt,sp.mid);return `<tr><td>${t}</td><td>${E.iso(Tt)}</td><td class="r">${Tt-ctx.spotDate}</td><td class="r">${sgn(rr.pts,2)}</td><td class="r">${rt(rr.F,p)}</td><td class="r">${fmt((rr.F/sp.mid-1)*360/(Tt-ctx.spotDate)*100,3)}%</td><td><span class="tag q${rr.grade}">${rr.grade}</span> ±${fmt(rr.unc,1)}</td></tr>`}).join('');
+ let dist='';if(Number.isFinite(vol)&&tau>0){const zs=[[-1.6449,'5%'],[-0.6745,'25%'],[0,'50%'],[0.6745,'75%'],[1.6449,'95%']];
+  dist=`<div class="panel"><h2>Spot a scadenza: distribuzione statistica</h2><div class="mu sm">Lognormale centrata sul forward (media = F), volatilità storica ${S.settings.volWin.slice(1)} gg = ${fmt(vol*100,2)}% annua, orizzonte ${fmt(tau*365,0)} giorni. È una statistica sulle oscillazioni passate, non una previsione.</div>
+  <div class="tw" style="margin-top:8px"><table><thead><tr><th>Percentile</th><th class="r">Spot a scadenza</th><th class="r">Coperto (${q})</th><th class="r">Non coperto (${q})</th><th class="r">Vantaggio copertura</th></tr></thead><tbody>${zs.map(([z,l])=>{const sd=vol*Math.sqrt(tau);const ST=F*Math.exp(-0.5*sd*sd+z*sd);const hedged=sg*N*F,un=sg*N*ST;return `<tr><td>${l}</td><td class="r">${rt(ST,p)}</td><td class="r">${fmt(hedged,0)}</td><td class="r">${fmt(un,0)}</td><td class="r ${cls(hedged-un)}">${sgn(hedged-un,0)}</td></tr>`}).join('')}</tbody></table></div>
+  <div class="sm" style="margin-top:6px">Probabilità che a scadenza lo spot sia ${side==='SELL'?'sotto':'sopra'} il forward, cioè che la copertura risulti vantaggiosa a posteriori: <b>${fmt(100*(side==='SELL'?1-E.probAbove(F,F,vol,tau):E.probAbove(F,F,vol,tau)),1)}%</b>. Non arriva al 50% esatto per l'asimmetria della lognormale.</div></div>`}
+ $('smOut').innerHTML=`<div class="grid g2"><div class="panel"><h2>${pairTxt(p)} · ${side==='SELL'?'vendo':'compro'} ${fmt(N,0)} ${b} al ${E.iso(T)}</h2><div class="res"><div class="mu sm">Forward fair (mid)</div><div class="big">${rt(F,p)}</div><div class="sm">${sgn(ref.pts,2)} pips sullo spot ${rt(sp.mid,p)} · <span class="tag q${ref.grade}">${ref.grade}</span> ±${fmt(ref.unc,1)} pips</div></div>
+ <div class="kv" style="margin-top:10px"><div>Data spot / giorni</div><div>${E.iso(ctx.spotDate)} / ${d}</div><div>Controvalore a termine</div><div>${fmt(N*F,2)} ${q}</div><div>Differenza rispetto alla conversione spot</div><div class="${cls(sg*N*(F-sp.mid))}">${sgn(sg*N*(F-sp.mid),2)} ${q}</div><div>Premio/sconto annualizzato (ACT/360)</div><div>${fmt(carry,3)}%</div><div>Tasso ${b} usato</div><div>${fmt(r.rB*100,4)}%</div><div>Tasso ${q} usato</div><div>${fmt(r.rQ*100,4)}%</div><div>Fonte</div><div>${esc(ref.src)}</div></div>
+ <div class="mu xs" style="margin-top:8px">Se vendi la base e i punti sono positivi, la copertura ti rende la differenza di tasso; se sono negativi, ti costa. È il differenziale dei tassi, non una previsione sul cambio.</div></div>
+ <div class="panel"><h2>Curva dei punti</h2><div class="tw"><table><thead><tr><th>Tenor</th><th>Data valuta</th><th class="r">Giorni</th><th class="r">Punti</th><th class="r">Outright</th><th class="r">Premio annuo</th><th>Qualità</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>${dist}`;
+ S.lastSim={pair:p,side,N,K:F,T:E.iso(T)};
+}
+// ---------------- market tab ----------------
+function renderMarket(){
+ const mk=S.mk;const errs=(mk.errors||[]).map(esc);
+ $('mkStatus').innerHTML=`<div class="kv"><div>Origine dati tassi</div><div>${S.mkMeta.src==='feed'?'Feed giornaliero (GitHub Action → archivio della pagina), SHA-256 verificato':'Istantanea iniziale del 19/11/2026, in attesa del primo feed'}</div><div>Generato</div><div>${new Date(mk.generatedAt).toLocaleString('it-IT')}</div><div>Fonti non disponibili</div><div>${errs.length?errs.join('<br>'):'nessuna'}</div></div>${mk.seedNote&&S.mkMeta.src!=='feed'?`<div class="note warn" style="margin-top:8px">${esc(mk.seedNote)}</div>`:''}`;
+ $('mkSpot').innerHTML=`<div class="tw"><table><thead><tr><th>Coppia</th><th class="r">Mid usato</th><th>Fonte</th><th class="r">exchangerate.dev</th><th class="r">Coinbase</th><th class="r">Scarto (pips)</th><th class="r">Bigdata.com</th></tr></thead><tbody>${MAIN.map(p=>{const s=getSpot(p),fs=E.feedSpot(mk,p.slice(0,3),p.slice(3)),bg=S.big?.pairs?.[p];return `<tr><td><b>${pairTxt(p)}</b></td><td class="r">${rt(s.mid,p)}</td><td class="xs">${esc(s.src)} · ${s.at?ageTxt(Date.now()-s.at)+' fa':''}</td><td class="r">${fs?rt(fs.vals[0],p):'—'}</td><td class="r">${fs&&fs.vals[1]?rt(fs.vals[1],p):'—'}</td><td class="r">${fs?fmt(fs.diffPips,1):'—'}</td><td class="r">${bg?rt(bg.mid,p)+' <span class="mu xs">±'+bg.prec+'</span>':'—'}</td></tr>`}).join('')}</tbody></table></div><div class="mu xs" style="margin-top:6px">Lo spot del feed è un'istantanea all'ora di generazione; Bigdata.com riporta EUR/USD a 5 decimali e i cross a 4 (precisione indicata in pips). Per il controllo banca usa il mid dello stesso istante della quotazione.</div>`;
+ $('mkCurves').innerHTML=['USD','EUR','GBP','CHF','JPY'].map(c=>{const cv=S.curves[c];return `<div class="tw"><table><thead><tr><th>${c} <span class="tag q${cv.quality}">${cv.quality}</span> <span class="mu">ACT/${E.basis(c)}</span></th><th class="r">Giorni</th><th class="r">Tasso</th><th>Fonte</th></tr></thead><tbody>${cv.pillars.map(x=>`<tr><td>${esc(x.label)}</td><td class="r">${x.days}</td><td class="r">${fmt(x.rate*100,4)}%</td><td class="xs mu">${esc(x.src)}</td></tr>`).join('')}</tbody></table></div>`}).join('');
+ $('mkCalib').innerHTML=`<div class="tw"><table><thead><tr><th>Coppia</th><th>Qualità</th><th>Calibrata</th><th>Fonte</th><th>Gamba</th><th>Spread per pilastro (giorni: bp)</th></tr></thead><tbody>${PAIR_LIST.map(p=>{const ci=calibInfo(p);const c=S.calib[p];return `<tr><td><b>${pairTxt(p)}</b></td><td><span class="tag q${ci.grade}">${ci.grade}</span></td><td class="xs">${c?new Date(c.asOf).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'})+' · '+esc(ci.why):'—'}</td><td class="xs">${c?esc(c.source):'—'}</td><td>${c?(c.leg==='base'?p.slice(0,3):p.slice(3)):''}</td><td class="xs mono">${c?c.pillars.map(x=>x.days+': '+sgn(x.s*1e4,1)).join(' · '):'non calibrata: solo CIP con tassi pubblici'}</td></tr>`}).join('')}</tbody></table></div>`;
+ $('mkManual').innerHTML=`<div class="tw"><table><thead><tr><th>Valuta</th>${['ON','1M','3M','6M','12M'].map(k=>`<th>${k} %</th>`).join('')}</tr></thead><tbody>${['GBP','CHF','JPY','EUR','USD'].map(c=>`<tr><td><b>${c}</b> <span class="xs mu">${E.ON_NAME[c]}</span></td>${['ON','1M','3M','6M','12M'].map(k=>`<td><input data-man="${c}|${k}" inputmode="decimal" style="min-width:70px" value="${S.settings.manual?.[c]?.[k]??''}"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+ $('stRep').value=S.settings.reportCcy;$('stVol').value=S.settings.volWin;$('stVal').value=S.settings.valDate||'';$('stUnc').value=[S.settings.unc.A,S.settings.unc.B,S.settings.unc.C].join('/');$('stHol').value=S.settings.holidays||'';
+}
+// ---------------- method ----------------
+function renderMethod(){$('methodText').innerHTML=`<h1>Metodo, convenzioni e fonti</h1>
+<h3>1. Parità coperta dei tassi (CIP)</h3><div class="sm">Per una coppia BASE/QUOTATA con spot S (unità di quotata per 1 base) e data valuta T, con d giorni di calendario dalla data spot:</div><div class="f">F(T) = S × (1 + r_Q × d / B_Q) / (1 + r_B × d / B_B)
+punti (pips) = (F − S) / pip      pip = 0,0001 (0,01 se quotata JPY)</div>
+<div class="sm">r sono tassi semplici monetari per depositi che partono alla data spot. B è la base di calcolo: 360 per USD, EUR, CHF; 365 per GBP, JPY. Per date valuta prima della data spot (cash, tom) la formula è invertita sui giorni tra T e la data spot.</div>
+<h3>2. Date</h3><div class="sm">Data spot = 2 giorni lavorativi dopo la data di valutazione, contati sui calendari delle valute non-USD; la data spot deve essere lavorativa per base, quotata e USD (un festivo USD a T+1 non blocca il conteggio per le coppie contro USD). Scadenze in mesi: dalla data spot, modified following, regola di fine mese (se la data spot è l'ultimo giorno lavorativo del mese, la scadenza è l'ultimo giorno lavorativo del mese di arrivo). Calendari: Federal Reserve (USD), TARGET2 (EUR), bank holiday di Inghilterra e Galles (GBP), piazza di Zurigo (CHF), Tokyo con festività nazionali, sostitutive, «del cittadino» ed equinozi calcolati, più 2–3 gennaio e 31 dicembre (JPY). Le festività straordinarie si aggiungono a mano in «Mercato e dati». La data valuta confermata dalla banca prevale sempre.</div>
+<h3>3. Tassi</h3><div class="sm">USD: SOFR (O/N) e T-bill 4–52 settimane. Il rendimento di sconto bancario d dei T-bill è convertito in modo esatto: prezzo P = 1 − d × t/360, tasso monetario = (1/P − 1) × 360/t. EUR: €STR (O/N) e curva AAA della BCE 3M–1Y, tassi composti continui z convertiti in tasso semplice: (e^(z·y) − 1) × 360/d, con d = y × 365,25. GBP, CHF, JPY: SONIA, SARON, TONA dal feed; se mancano, il tasso di policy BIS fa da proxy. Interpolazione lineare sul tasso per giorni, estrapolazione piatta.</div>
+<h3>4. Calibrazione e cross-currency basis</h3><div class="sm">I punti di mercato non coincidono con la CIP calcolata su tassi pubblici: c'è il cross-currency basis, e per GBP/CHF/JPY manca la struttura a termine dei tassi. Per ogni scadenza osservata si risolve in forma chiusa lo spread s da aggiungere a una gamba (la non-USD, o la base nei cross) in modo che la CIP riproduca esattamente il mid osservato:</div><div class="f">gamba base:     s = [S(1 + r_Q d/B_Q)/F_mkt − 1] × B_B/d − r_B
+gamba quotata:  s = [F_mkt(1 + r_B d/B_B)/S − 1] × B_Q/d − r_Q</div><div class="sm">Tra le scadenze lo spread è interpolato linearmente. Quando le curve pubbliche si spostano, lo spread resta fisso (ipotesi: basis stabile); lo scostamento delle curve dalla calibrazione è mostrato e abbassa la qualità oltre 5 bp. Validazione del 19/11/2026 su EUR/USD a 3 mesi: CIP con T-bill e curva AAA 43,8 pips contro 44,8 di mercato; con i soli overnight 40,7.</div>
+<h3>5. Valore di una posizione (MTM)</h3><div class="f">flusso a scadenza = σ × N × (K − F(T))     σ = +1 se vendi la base, −1 se la compri
+valore a data spot = flusso × DF_Q(spot, T),   DF_Q = 1 / (1 + r_Q d / B_Q)</div>
+<h3>6. Chiusura anticipata, consegna anticipata, proroga</h3><div class="sm"><b>Close-out</b>: si apre un forward opposto alla stessa scadenza. Il P&amp;L è σN(K − F_banca), regolato a scadenza o attualizzato se liquidato subito. <b>Consegna anticipata</b> a T₁ &lt; T: la banca fa uno swap (vicino a T₁, lontano a T). Il cambio economicamente esatto, a valore attuale invariato, è</div><div class="f">K₁ = F(T₁) + (K − F(T)) × DF_Q(T₁, T)</div><div class="sm">Il metodo «semplificato» K − [F(T) − F(T₁)] ignora l'attualizzazione del P&amp;L: la differenza è un finanziamento a favore di una delle parti. <b>Proroga</b> a T₂ &gt; T (historical rate rollover):</div><div class="f">K₂ = F(T₂) + (K − F(T)) / DF_Q(T, T₂)        semplificato: K + [F(T₂) − F(T)]</div><div class="sm">Le identità di valore sono verificate nei test: il valore attuale della posizione modificata è uguale a quello dell'originale (scarto &lt; 10⁻⁶).</div>
+<h3>7. Controllo della banca</h3><div class="f">margine (cambio) = +(F_banca − F_mid) se compri la base, −(F_banca − F_mid) se la vendi
+in denaro = margine × N (valuta quotata)      in bp = margine / F_mid × 10 000
+sui punti, annuo = margine_punti × pip / S / (d/360) × 10 000</div><div class="sm">Il riferimento ha una qualità: <b>A</b> = punti di mercato incollati da meno di 6 ore, o calibrazione di meno di 24 ore; <b>B</b> = calibrazione fino a 7 giorni, oppure curve ufficiali complete per entrambe le valute ma senza calibrazione; <b>C</b> = calibrazione più vecchia o proxy di policy. L'incertezza in pips = S × u × d/360 / pip, con u = ${S.settings.unc.A}/${S.settings.unc.B}/${S.settings.unc.C} bp annui per A/B/C (parametri modificabili, ipotesi esplicite e non dati di mercato). Con la tabella incollata l'incertezza è lo scarto tra interpolazione lineare dei punti e modello calibrato. Il verdetto «margine tra X e Y pips» è margine ± incertezza.</div>
+<h3>8. Elementi statistici (non previsionali)</h3><div class="sm">Volatilità storica: deviazione standard dei log-rendimenti giornalieri dei cambi di riferimento BCE su 20/60/250 osservazioni × √252. Distribuzione a scadenza: lognormale con media pari al forward. Sotto la misura neutrale al rischio il forward è il valore atteso, non una previsione: la CIP dice quanto costa coprirsi oggi, non dove andrà il cambio.</div>
+<h3>9. Limiti dichiarati</h3><div class="sm">I dati gratuiti sono di fine giornata (tassi) o istantanee (spot): non sono quotazioni eseguibili. I T-bill regolano a T+1 e la curva AAA è un fit su titoli di Stato: sono approssimazioni del tasso risk-free assorbite dalla calibrazione. Non sono modellati rischio di controparte, CVA, margini di garanzia né costi di regolamento. La pagina non può scaricare dati da internet: i tassi arrivano da un feed giornaliero verificato con SHA-256; lo spot su richiesta da Bigdata.com.</div>
+<h3>10. Fonti</h3><div class="sm"><a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_bill_rates" target="_blank" rel="noopener">U.S. Treasury – Daily Treasury Bill Rates</a> · <a href="https://www.newyorkfed.org/markets/reference-rates/sofr" target="_blank" rel="noopener">NY Fed – SOFR</a> · <a href="https://data.ecb.europa.eu/data/datasets/EST" target="_blank" rel="noopener">BCE – €STR</a> · <a href="https://data.ecb.europa.eu/data/datasets/YC" target="_blank" rel="noopener">BCE – curva dei rendimenti AAA</a> · <a href="https://data.bis.org/topics/CBPOL" target="_blank" rel="noopener">BIS – tassi di policy</a> · <a href="https://www.bankofengland.co.uk/boeapps/database/" target="_blank" rel="noopener">BoE – SONIA</a> · <a href="https://data.snb.ch" target="_blank" rel="noopener">BNS – SARON</a> · <a href="https://www.stat-search.boj.or.jp/" target="_blank" rel="noopener">BoJ – TONA</a> · <a href="https://www.fxempire.com/currencies/eur-usd/forward-rates" target="_blank" rel="noopener">FXEmpire – punti forward mid</a> · <a href="https://www.frankfurter.app" target="_blank" rel="noopener">Frankfurter (cambi di riferimento BCE)</a></div>`}
+// ---------------- import / export ----------------
+function importJson(obj){
+ let list=[];
+ if(obj&&obj.schema==='fxdesk-v2'&&Array.isArray(obj.book?.positions)){S.book=obj.book;if(obj.settings)S.settings=Object.assign(S.settings,obj.settings);if(obj.calib)S.calib=obj.calib;saveDoc('settings');saveDoc('calib');}
+ else if(obj&&Array.isArray(obj.positions)){for(const t of obj.positions){if(!t||!t.base||!t.quote||t.base===t.quote)continue;let pair=orderPair(t.base,t.quote);let side=t.side==='SELL'||t.side==='BUY'?t.side:'SELL';let K=Number(t.contract),N=Number(t.notional);
+   if(!(pair.slice(0,3)===t.base)){side=side==='SELL'?'BUY':'SELL';N=N*K;K=1/K}
+   if(!CCYS.includes(t.base)||!CCYS.includes(t.quote))continue;
+   const x={id:S.book.nextId++,pair,side,N,K,trade:t.tradeDate||'',T:t.maturity,cpty:t.counterparty||'',ref:t.reference||'',notes:'importato dalla dashboard precedente (FX-'+t.id+')',status:t.status==='closed'?'closed':'open'};
+   if(x.status==='closed')x.close={date:t.exitDate||'',method:'importata',rate:Number(t.exitRate),cash:Number.isFinite(Number(t.realizedCash))&&t.realizedCash!==null&&t.realizedCash!==''?Number(t.realizedCash):null};
+   list.push(x)}
+  S.book.positions.push(...list)}
+ else throw new Error('formato non riconosciuto');
+ saveDoc('book');renderAll();toast('Importate '+(list.length||S.book.positions.length)+' posizioni.');
+}
+// ---------------- routing & events ----------------
+function route(){const t=(location.hash||'#posizioni').slice(1);const v=['posizioni','banca','simulatore','mercato','metodo'].includes(t)?t:'posizioni';
+ document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!=='v-'+v));document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t===v));
+ if(v==='banca')renderBankForm();if(v==='mercato')renderMarket();if(v==='metodo')renderMethod();if(v==='simulatore'&&!$('smOut').innerHTML)simCompute()}
+function renderAll(){renderStatus();renderBook();const t=(location.hash||'#posizioni').slice(1);if(t==='mercato')renderMarket();if(t==='metodo')renderMethod()}
+function wire(){
+ window.addEventListener('hashchange',route);
+ $('addPos').onclick=()=>openForm(null);$('refreshBig').onclick=refreshBigdata;$('refreshBig2').onclick=refreshBigdata;
+ $('bookSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.bookSeg=b.dataset.s;renderBook()};
+ $('bookTable').onclick=e=>{const ro=e.target.closest('[data-reopen]'),de=e.target.closest('[data-del]');
+  if(ro){const x=S.book.positions.find(p=>p.id===+ro.dataset.reopen);x.status='open';delete x.close;saveDoc('book');renderAll();return}
+  if(de){if(de.dataset.c){S.book.positions=S.book.positions.filter(p=>p.id!==+de.dataset.del);saveDoc('book');renderAll()}else{de.dataset.c=1;de.textContent='Conferma'}return}
+  const r=e.target.closest('[data-id]');if(r)openDetail(+r.dataset.id)};
+ $('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('on')};
+ $('bkMode').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.bkMode=b.dataset.m;$('bkOut').innerHTML='<span class="mu sm">Inserisci i dati e premi «Calcola il margine».</span>';renderBankForm()};
+ $('bkGo').onclick=bankCompute;
+ $('bkPasteGo').onclick=()=>{const p=bkPair();const r=applyMarket(p,parseMarket($('bkPaste').value),num($('bkSmid').value));$('bkPasteMsg').textContent=r.err||('Tabella '+pairTxt(p)+' acquisita: '+r.n+' scadenze, spot '+rt(r.S0,p)+'.');if(r.ok){prefillMid();renderStatus()}};
+ $('smGo').onclick=simCompute;$('smTenor').onchange=simCompute;$('smPair').innerHTML=pairOptions('EURUSD');
+ $('smSave').onclick=()=>{if(!S.lastSim)simCompute();openForm(null);const l=S.lastSim;$('fPair').value=l.pair;$('fSide').value=l.side;$('fN').value=l.N;$('fK').value=l.K.toFixed(dpOf(l.pair));$('fT').value=l.T;$('fNotes').value='da simulatore (forward fair, da sostituire con il cambio eseguito)'};
+ $('clPair').innerHTML=pairOptions('EURUSD');$('clPair').onchange=()=>{const p=$('clPair').value;$('clLink').href='https://www.fxempire.com/currencies/'+(p.slice(0,3)+'-'+p.slice(3)).toLowerCase()+'/forward-rates'};
+ $('clGo').onclick=()=>{const p=$('clPair').value;const r=applyMarket(p,parseMarket($('clPaste').value),getSpot(p).mid);$('clMsg').textContent=r.err||('Calibrata '+pairTxt(p)+' su '+r.n+' scadenze.');if(r.ok){renderMarket();renderBook()}};
+ $('clReset').onclick=()=>{const p=$('clPair').value;if(FACTORY[p])S.calib[p]=JSON.parse(JSON.stringify(FACTORY[p]));else delete S.calib[p];saveDoc('calib');renderMarket();renderBook();$('clMsg').textContent='Ripristinata.'};
+ $('manSave').onclick=()=>{const man={};document.querySelectorAll('[data-man]').forEach(i=>{const [c,k]=i.dataset.man.split('|');const v=num(i.value);if(Number.isFinite(v))(man[c]=man[c]||{})[k]=v});S.settings.manual=man;rebuild();saveDoc('settings');renderMarket();renderBook();toast('Tassi manuali salvati.')};
+ $('stSave').onclick=()=>{const u=$('stUnc').value.split('/').map(num);S.settings.reportCcy=$('stRep').value;S.settings.volWin=$('stVol').value;S.settings.valDate=$('stVal').value||null;if(u.length===3&&u.every(x=>x>=0))S.settings.unc={A:u[0],B:u[1],C:u[2]};S.settings.holidays=$('stHol').value;rebuild();saveDoc('settings');renderAll();toast('Impostazioni salvate.')};
+ $('expBtn').onclick=()=>{$('expBox').value=JSON.stringify({schema:'fxdesk-v2',exportedAt:new Date().toISOString(),book:S.book,settings:S.settings,calib:S.calib},null,1);$('expBox').classList.remove('hidden');$('expCopy').classList.remove('hidden')};
+ $('expCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('expBox').value);toast('Backup copiato negli appunti.')}catch(e){$('expBox').select();toast('Copia non consentita: seleziona il testo e copialo a mano.')}};
+ $('impFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{importJson(JSON.parse(await f.text()))}catch(err){toast('File non valido: '+err.message)}e.target.value=''};
+}
+// ---------------- boot ----------------
+const saved=lsGet();if(saved){if(saved.book)S.book=saved.book;if(saved.settings)S.settings=Object.assign(S.settings,saved.settings);if(saved.calib)S.calib=saved.calib;if(saved.big)S.big=saved.big}
+rebuild();wire();route();renderAll();initDb();
+})();
+</script>
+</body>
+</html>
