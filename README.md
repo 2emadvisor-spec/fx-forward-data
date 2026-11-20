@@ -1,6 +1,7 @@
 # fx-forward-data (PRIV)
 
-Daily feed of **public, free, official** inputs for the FX Forward Desk (claude.ai artifact).
+**FX Forward Desk** (web app, `index.html`, served by GitHub Pages) and its daily feed of **public, free, official** inputs.
+App sources, engine and unit tests are in `app/` (`node app/test.js`).
 No positions or personal data are stored here.
 
 | Item | Source | Notes |
